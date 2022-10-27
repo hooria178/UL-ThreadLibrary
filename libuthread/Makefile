@@ -1,28 +1,13 @@
 # Target library
-lib := libuthread.a
-objs := queue.o
-CC := gcc
-CFLAGS:= -Wall -Wextra -Werror -MMD
-CFLAGS += -g
-
-ifneq($(V), 1)
-Q = @
-endif
+lib:= libuthread.a
 
 all: $(lib)
 
 ## TODO: Phase 1
-deps := $(patsubst %.o, %.d, $(objs))
--include $(deps)
-
-libuthread.a: $(objs)
-	@echo "CC $@"
-	$(Q)$(CC) $(CFLAGS) -o $@ $^
-
-%.o: %.c
-	@echo "CC $@"
-	$(Q)$(CC) $(CFLAGS) -c -o $@ $<
+libuthread.a: queue.o
+	gcc -Wall -Wextra -Werror -o libuthread.a queue.o
+queue.o: queue.c queue.h
+	gcc -Wall -Wextra -Werror -c -o queue.o queue.c
 
 clean:
-	@echo "CC $@"
-	$(Q)rm -f $(lib) $(objs) $(deps)
+	rm -f libuthread.a queue.o 
