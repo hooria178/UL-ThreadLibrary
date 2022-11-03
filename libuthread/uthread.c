@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
+#include <stdbool.h>
 
 #include "private.h"
 #include "uthread.h"
@@ -20,13 +21,12 @@ struct uthread_tcb
     void *threadArg;
 
 	uthread_ctx_t *uctx;
+    void* threadTopOfStack;
 };
 
 
-/* Create variables to track the initialization of the queues
-	 and the id being assigned to the threads */
+/* Create variables to track the id being assigned to the threads */
 int threadCount = 0;
-int queuesSet = 0;
 
 /* Have the readyQueue, blockedQueue, and zombieQueue be global so all threads have access to it
    and the struct runningThread be for the thread in the running state.
@@ -70,31 +70,28 @@ void uthread_yield(void)
 
 void uthread_exit(void)
 {
-    /* TODO Phase 2 */
+    struct uthread_tcb* newRunningThread;
+
+	// if(!readyQueue)
+	// {
+	// 	return -1;
+	// }
+
+	queue_dequeue(readyQueue, (void**)(&newRunningThread));
+
+	queue_enqueue(zombieQueue, (void*)(runningThread));
+
+	struct uthread_tcb* assignNewRunningThread;
+	assignNewRunningThread = runningThread;
+	runningThread = newRunningThread;
+
+	uthread_ctx_switch(&assignNewRunningThread->uctx, &newRunningThread->uctx);
+
 }
 
 int uthread_create(uthread_func_t func, void *arg)
 {
     /* TODO Phase 2 */
-	/* Intialize queues if not already done! */
-    if (queuesSet == 0)
-    {
-        readyQueue = queue_create();
-		blockedQueue = queue_create();
-		zombieQueue = queue_create();
-
-		queuesSet = 1;
-
-		//preempt_enable();
-		// idleThread? aka the main thread?
-		runningThread = (uthread_tcb*)malloc(sizeof(uthread_tcb));
-		//Error management: Memory Allocation
-		if(runningThread == NULL)
-		{
-			return -1;
-		}
-		//preempt_disable();
-    }
 
 	/* Initialize the new thread and its properties: */
 	struct uthread_tcb newThread = (uthread_tcb*)malloc(sizeof(uthread_tcb));
@@ -102,30 +99,52 @@ int uthread_create(uthread_func_t func, void *arg)
 	newThread->threadArg = arg;
 	threadCount++;
 	newThread->threadID = threadCount;
-	
-	
+    newThread->threadTopOfStack = uthread_ctx_alloc_stack();
+    uthread_ctx_init(newThread->uctx, newThread->threadTopOfStack, newThread->threadFunc, newThread->threadArg);
+
     /*  the creation of a new thread should
         enqueue its TCB at the end of the ready queue.*/
+    queue_enqueue(readyQueue, (void*)(newThread));
+    
 }
 
 int uthread_run(bool preempt, uthread_func_t func, void *arg)
 {
     /* TODO Phase 2 */
+
+    //Initialize queues
+    readyQueue = queue_create();
+    blockedQueue = queue_create();
+    zombieQueue = queue_create();
+
+
+    if (preempt == true)
+    {
+        preempt_start();
+    }
+
     /* First Action: Register so-far execution flow as idleThread */
-    preempt_enable();
+    
     // register so-far single execution flow of the application
     // thread that the library can later schedule for execution like any other threads
-    preempt_disable()
+    struct uthread_tcb* idleThread = (uthread_tcb*)malloc(sizeof(uthread_tcb));
+    idleThread->threadFunc = func;
+    idleThread->threadArg = arg;
+    idleThread->threadID = threadCount;
+    idleThread->threadTopOfStack = uthread_ctx_alloc_stack();
+    // uthread_ctx_init(idleThread->uctx, idleThread->threadTopOfStack, idleThread->threadFunc, idleThread->threadArg);
 
-        /* Second Action: Create the initialThread as specified by the arguments of the function */
-        // create a new thread, the initial thread, as specified by the arguments of the function
-        struct uthread_tcb *initialThread = uthread_create(uthread_func_t func, void *arg);
+    /* Second Action: Create the initialThread as specified by the arguments of the function */
+    // create a new thread, the initial thread, as specified by the arguments of the function
+    struct uthread_tcb* initialThread = uthread_create(uthread_func_t func, void *arg);
 
     /* Third Action: Execute infinite loop which:
         1. Stops the idle loop and returns if there are no more threads in the readyQueue
         2. Yields to the next available thread in readyQueue
         3. (Optional?) Deal with threads that reach completion and destroys their TCB
     */
+
+
     while (1)
     {
         if (!readyQueue) // if there are no more threads in the ready queue
@@ -142,9 +161,27 @@ void uthread_block(void)
     /* TODO Phase 3 */
     /* context switch function */
     /* change the state and yielding to the next available thread.*/
+    struct uthread_tcb* newRunningThread;
+
+	queue_dequeue(readyQueue, (void**)(&newRunningThread));
+
+	queue_enqueue(blockedQueue, (void*)(runningThread));
+
+	struct uthread_tcb* assignNewRunningThread;
+	assignNewRunningThread = runningThread;
+	runningThread = newRunningThread;
+
+	uthread_ctx_switch(&assignNewRunningThread->uctx, &newRunningThread->uctx);
 }
 
 void uthread_unblock(struct uthread_tcb *uthread)
 {
     /* TODO Phase 3 */
+    /*
+    * uthread_unblock - Unblock thread
+    * @uthread: TCB of thread to unblock
+    */
+	queue_dequeue(blockedQueue, (void**)(&uthread));
+	queue_enqueue(readyQueue, (void*)(uthread));
+
 }
