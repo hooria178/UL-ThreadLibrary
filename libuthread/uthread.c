@@ -26,7 +26,7 @@ struct uthread_tcb
 
 
 /* Create variables to track the id being assigned to the threads */
-int threadCount = 0;
+int* threadCount = 0;
 
 /* Have the readyQueue, blockedQueue, and zombieQueue be global so all threads have access to it
    and the struct runningThread be for the thread in the running state.
@@ -39,7 +39,8 @@ queue_t zombieQueue;
 
 struct uthread_tcb *uthread_current(void)
 {
-	return runningThread->threadID;
+	return 0;
+    /* I DON'T KNOW WHAT GOES IN HERE */
 }
 
 void uthread_yield(void)
@@ -52,10 +53,10 @@ void uthread_yield(void)
 
 	struct uthread_tcb* newRunningThread;
 
-	if(!readyQueue)
-	{
-		return -1;
-	}
+	// if(!readyQueue)
+	// {
+	// 	return -1;
+	// }
 
 	queue_dequeue(readyQueue, (void**)(&newRunningThread));
 
@@ -64,7 +65,7 @@ void uthread_yield(void)
 	assignNewRunningThread = runningThread;
 	runningThread = newRunningThread;
 
-	uthread_ctx_switch(&assignNewRunningThread->uctx, &newRunningThread->uctx);
+	uthread_ctx_switch(assignNewRunningThread->uctx, newRunningThread->uctx);
 	
 }
 
@@ -85,7 +86,7 @@ void uthread_exit(void)
 	assignNewRunningThread = runningThread;
 	runningThread = newRunningThread;
 
-	uthread_ctx_switch(&assignNewRunningThread->uctx, &newRunningThread->uctx);
+	uthread_ctx_switch(assignNewRunningThread->uctx, newRunningThread->uctx);
 
 }
 
@@ -94,7 +95,7 @@ int uthread_create(uthread_func_t func, void *arg)
     /* TODO Phase 2 */
 
 	/* Initialize the new thread and its properties: */
-	struct uthread_tcb newThread = (uthread_tcb*)malloc(sizeof(uthread_tcb));
+	struct uthread_tcb* newThread = malloc(sizeof(struct uthread_tcb));
 	newThread->threadFunc = func;
 	newThread->threadArg = arg;
 	threadCount++;
@@ -105,6 +106,8 @@ int uthread_create(uthread_func_t func, void *arg)
     /*  the creation of a new thread should
         enqueue its TCB at the end of the ready queue.*/
     queue_enqueue(readyQueue, (void*)(newThread));
+
+    return 0;
     
 }
 
@@ -120,14 +123,14 @@ int uthread_run(bool preempt, uthread_func_t func, void *arg)
 
     if (preempt == true)
     {
-        preempt_start();
+        preempt_start(preempt);
     }
 
     /* First Action: Register so-far execution flow as idleThread */
     
     // register so-far single execution flow of the application
     // thread that the library can later schedule for execution like any other threads
-    struct uthread_tcb* idleThread = (uthread_tcb*)malloc(sizeof(uthread_tcb));
+    struct uthread_tcb* idleThread = malloc(sizeof(struct uthread_tcb));
     idleThread->threadFunc = func;
     idleThread->threadArg = arg;
     idleThread->threadID = threadCount;
@@ -135,16 +138,16 @@ int uthread_run(bool preempt, uthread_func_t func, void *arg)
     // uthread_ctx_init(idleThread->uctx, idleThread->threadTopOfStack, idleThread->threadFunc, idleThread->threadArg);
 
     /* Second Action: Create the initialThread as specified by the arguments of the function */
-    // create a new thread, the initial thread, as specified by the arguments of the function
-    struct uthread_tcb* initialThread = uthread_create(uthread_func_t func, void *arg);
+    // NEED TO PROPERLY CREATE AN INITIAL THREAD
+    struct uthread_tcb* initialThread = uthread_create(func, arg);
+    /* DONT KNOW WHAT TO DO WITH THE INITIAL THREAD */
 
     /* Third Action: Execute infinite loop which:
         1. Stops the idle loop and returns if there are no more threads in the readyQueue
         2. Yields to the next available thread in readyQueue
         3. (Optional?) Deal with threads that reach completion and destroys their TCB
     */
-
-
+    /* NEED TO FINISH THIS LOOP */
     while (1)
     {
         if (!readyQueue) // if there are no more threads in the ready queue
@@ -171,7 +174,7 @@ void uthread_block(void)
 	assignNewRunningThread = runningThread;
 	runningThread = newRunningThread;
 
-	uthread_ctx_switch(&assignNewRunningThread->uctx, &newRunningThread->uctx);
+	uthread_ctx_switch(assignNewRunningThread->uctx, newRunningThread->uctx);
 }
 
 void uthread_unblock(struct uthread_tcb *uthread)
@@ -185,3 +188,5 @@ void uthread_unblock(struct uthread_tcb *uthread)
 	queue_enqueue(readyQueue, (void*)(uthread));
 
 }
+
+/* GETTING TWO ERRORS WHEN COMPILING IN THE SECTION OF UTHREAD_RUN() FUNCTION */
