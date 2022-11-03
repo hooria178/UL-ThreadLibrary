@@ -8,26 +8,11 @@
 
 #include "private.h"
 #include "uthread.h"
+#include "queue.h"
 
-
-/* TCB contains the context of each thread (stack, registers etc.). contexts_fixed_schedule.c shows you how to use ucontext*/
-/* Create variables to track the initialization of the queues and the id being assigned to the threads */
 
 struct uthread_tcb
 {
-    /* TODO Phase 2 */
-	/*
-		threadID == unique identifier assigned by OS when created
-		threadState == state of the thread as it progresses through the system
-		stack == contains all the CPU information?
-		func ==  function to be executed by the thread
-		arg == argument to be passed to the thread
-
-		uctx == thread's pointer to the tcb?
-		prev == pointer to the process that triggered the creation of this thread?
-		next == pointer to the thread(s) created by this thread?
-
-	*/
 	int *threadID; 
 	int *threadState;
 	void* stack;
@@ -37,21 +22,24 @@ struct uthread_tcb
 	uthread_ctx_t *uctx;
 };
 
-/* Have the readyQueue, blockedQueue, and zombieQueue be global so all threads have access to it
-   and the runningThread be for the thread in the running state.
-*/
 
+/* Create variables to track the initialization of the queues
+	 and the id being assigned to the threads */
 int threadCount = 0;
+int queuesSet = 0;
+
+/* Have the readyQueue, blockedQueue, and zombieQueue be global so all threads have access to it
+   and the struct runningThread be for the thread in the running state.
+*/
 struct uthread_tcb* runningThread;
 queue_t readyQueue;
 queue_t blockedQueue;
 queue_t zombieQueue;
-int queuesSet = 0;
 
 
 struct uthread_tcb *uthread_current(void)
 {
-    /* TODO Phase 2/3 */
+	return runningThread->threadID;
 }
 
 void uthread_yield(void)
@@ -61,6 +49,23 @@ void uthread_yield(void)
     enqueue the currently running thread,
     and context switch between the latter and the former.
     */
+
+	struct uthread_tcb* newRunningThread;
+
+	if(!readyQueue)
+	{
+		return -1;
+	}
+
+	queue_dequeue(readyQueue, (void**)(&newRunningThread));
+
+	queue_enqueue(readyQueue, (void*)(runningThread));
+	struct uthread_tcb* assignNewRunningThread;
+	assignNewRunningThread = runningThread;
+	runningThread = newRunningThread;
+
+	uthread_ctx_switch(&assignNewRunningThread->uctx, &newRunningThread->uctx);
+	
 }
 
 void uthread_exit(void)
