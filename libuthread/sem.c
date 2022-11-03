@@ -16,11 +16,11 @@ struct semaphore
 sem_t sem_create(size_t count)
 {
     /* TODO Phase 3 */
-    semt_t semaphore sem = (sem_t)malloc(sizeof(sem_t)); // multiply by count?
+    sem_t sem = (sem_t)malloc(sizeof(sem_t)); // multiply by count?
     sem->semCount = count;
-    sem->semQueue = queue_create()
+    sem->semQueue = queue_create();
 
-    return *sem;
+    return sem;
 }
 
 int sem_destroy(sem_t sem)
@@ -34,10 +34,10 @@ int sem_destroy(sem_t sem)
     queue_destroy(sem->semQueue);
     free(sem);
 
-    if (!free(sem))
-    {
-        return -1;
-    }
+    // if (!free(sem))
+    // {
+    //     return -1;
+    // }
 
     return 0;
     /* Error management: return -1 if @sem is NULL
@@ -94,3 +94,6 @@ int sem_up(sem_t sem)
 }
 /* go to the lectures recordings regarding synchronization
  and specifically focus on the count part and the block part of slide 20 and 21.*/
+
+
+/* NEED TO FIGURE OUT THE SPINLOCK DEAL AND SO BASICALLY SEM_UP and SEM_DOWN functions*/
