@@ -17,22 +17,23 @@
  */
 #define HZ 100
 
+/* Creates an instance of struct sigaction called preemptSignal to ...*/
 struct sigaction preemptSignal;
 
+/* Block signals of type SIGVTALRM */
 void preempt_disable(void)
 {
-    /* TODO Phase 4 */
-    /* Block signals of type SIGVTALRM */
     sigprocmask(SIG_BLOCK, &preemptSignal.sa_mask, NULL);
 }
 
+/* Unblock signals of type SIGVTALRM */
 void preempt_enable(void)
 {
-    /* TODO Phase 4 */
-    /* Unblock signals of type SIGVTALRM */
     sigprocmask(SIG_UNBLOCK, &preemptSignal.sa_mask, NULL);
 }
 
+/* The alarm function that sets the virtual-time timer to
+    expire in 10000 seconds. */
 unsigned int signalAlarm(void)
 {
     struct itimerval old, new;
@@ -46,6 +47,12 @@ unsigned int signalAlarm(void)
         return old.it_value.tv_sec;
 }
 
+/* preempt_start() executes all the function inside only if preempt == true,
+    then installs a signal handler that receives alarm signals, 
+    then force currently running thread to yield, then to the instance of sigaction, 
+    add virtual alarm , then the timer will fire a virtual alarm at frequency of 
+    100 HZ.
+*/
 void preempt_start(bool preempt)
 {
     /* TODO Phase 4 */
