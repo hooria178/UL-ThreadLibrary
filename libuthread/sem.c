@@ -5,17 +5,19 @@
 #include "sem.h"
 #include "private.h"
 
+/* semaphore struct containing semCount and semQueue as properties */
 struct semaphore
 {
-    /* TODO Phase 3 */
     size_t semCount;
     queue_t semQueue;
     //sem->lock ?
 };
 
+/* sem_create() allocates memory to the new semaphore,
+    then initializes it with its properties
+*/
 sem_t sem_create(size_t count)
 {
-    /* TODO Phase 3 */
     sem_t sem = (sem_t)malloc(sizeof(sem_t)); // multiply by count?
     sem->semCount = count;
     sem->semQueue = queue_create();
@@ -23,9 +25,14 @@ sem_t sem_create(size_t count)
     return sem;
 }
 
+/* sem_destroy() does error management, then destroyes the queue associated to that
+    sem and also deallocates the semaphore @sem
+*/
 int sem_destroy(sem_t sem)
 {
-    /* TODO Phase 3 */
+    /* Error: if @sem is NULL or there are other threads still being
+        blocked on @sem
+    */
     if (sem == NULL || (sem->semQueue != NULL))
     {
         return -1;
@@ -44,6 +51,7 @@ int sem_destroy(sem_t sem)
     or if other threads are still being blocked on @sem;
     return 0 if sem was successfully destroyed*/
 }
+
 
 int sem_down(sem_t sem)
 {
