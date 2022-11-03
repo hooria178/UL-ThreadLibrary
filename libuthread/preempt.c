@@ -34,6 +34,19 @@ void preempt_enable(void)
     sigprocmask(SIG_UNBLOCK, &signal.sa_mask, NULL);
 }
 
+unsigned int alarm (void)
+{
+    struct itimerval old, new;
+    new.it_interval.tv_usec = 0;
+    new.it_interval.tv_sec = 10000;
+    new.it_value.tv_usec = 0;
+    new.it_value.tv_sec = 10000;
+    if (setitimer(ITIMER_VIRTUAL, &new, &old) < 0)
+        return 0;
+    else
+        return old.it_value.tv_sec;
+}
+
 void preempt_start(bool preempt)
 {
     /* TODO Phase 4 */
@@ -52,15 +65,7 @@ void preempt_start(bool preempt)
         sigaction(SIGVTALRM, &signal, 0);
 
         /* A timer that fires a virtual alarm at frequency of 100 Hz*/
-        struct itimerval old, new;
-        new.it_interval.tv_usec = 0;
-        new.it_interval.tv_sec = 10000;
-        new.it_value.tv_usec = 0;
-        new.it_value.tv_sec = 10000;
-        if (setitimer(ITIMER_VIRTUAL, &new, &old) < 0)
-            return 0;
-        else
-            return old.it_value.tv_sec;
+        alarm();
     }
 }
 
