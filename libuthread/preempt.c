@@ -17,24 +17,23 @@
  */
 #define HZ 100
 
-struct sigaction signal;
-//struct itimerval old, new;
+struct sigaction preemptSignal;
 
 void preempt_disable(void)
 {
     /* TODO Phase 4 */
     /* Block signals of type SIGVTALRM */
-    sigprocmask(SIG_BLOCK, &signal.sa_mask, NULL);
+    sigprocmask(SIG_BLOCK, &preemptSignal.sa_mask, NULL);
 }
 
 void preempt_enable(void)
 {
     /* TODO Phase 4 */
     /* Unblock signals of type SIGVTALRM */
-    sigprocmask(SIG_UNBLOCK, &signal.sa_mask, NULL);
+    sigprocmask(SIG_UNBLOCK, &preemptSignal.sa_mask, NULL);
 }
 
-unsigned int alarm (void)
+unsigned int signalAlarm(void)
 {
     struct itimerval old, new;
     new.it_interval.tv_usec = 0;
@@ -54,18 +53,18 @@ void preempt_start(bool preempt)
     if (preempt == true)
     {
         /* Installs a signal handler that receives alarm signals (of type SIGVTALRM) */
-        sigemptyset(&signal.sa_mask);
-        sigaddset(&signal.sa_mask, SIGVTALRM);
+        sigemptyset(&preemptSignal.sa_mask);
+        sigaddset(&preemptSignal.sa_mask, SIGVTALRM);
 
         /* Force the currently running thread to yield */
         preempt_enable();
         uthread_yield();
 
         /* To the instance of sigaction, add virtual alarm (SIGVTALRM) */
-        sigaction(SIGVTALRM, &signal, 0);
+        sigaction(SIGVTALRM, &preemptSignal, 0);
 
         /* A timer that fires a virtual alarm at frequency of 100 Hz*/
-        alarm();
+        signalAlarm();
     }
 }
 
@@ -77,3 +76,5 @@ void preempt_stop(void)
         virtual alarm signals.
     */
 }
+
+/* NEED TO FINISH PREEMPT_STOP() FUNCTION */
