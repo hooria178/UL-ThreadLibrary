@@ -1,13 +1,24 @@
 # Target library
-lib:= libuthread.a
+lib := libuthread.a
+objs := preempt.o uthread.o context.o queue.o sem.o
+CC := gcc
+CFLAGS := -Wall -Werror
+CFLAGS += -g
+DEPFLAGS = -MMD -MF $(@:.o=.d)
+
+ifneq ($(V),1)
+Q = @
+endif
 
 all: $(lib)
 
-## TODO: Phase 1
-libuthread.a: queue.o
-	gcc -Wall -Wextra -Werror -o libuthread.a queue.o
-queue.o: queue.c queue.h
-	gcc -Wall -Wextra -Werror -c -o queue.o queue.c
+$(lib): $(objs)
+	$(Q)$(CC) $(CFLAGS) -o $@ $^
+
+%.o: %.c
+	@echo "CC $@"
+	$(Q)$(CC) $(CFLAGS) -c -o $@ $< $(DEPFLAGS)
 
 clean:
-	rm -f libuthread.a queue.o 
+	@echo "clean"
+	$(Q)rm -f $(targets) $(objs) $(lib) *.d
