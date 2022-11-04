@@ -133,16 +133,3 @@ int queue_length(queue_t queue)
 	}
 	return queue->length;
 }
-
-void queue_print(queue_t queue)
-{
-  printf("Queue[%d]:\n", queue->length);
-  struct listItem *current = queue->first;
-  int i = 0;
-  while(current)
-  {
-    printf("[%d]: %d\n", i, *(int*)current->data);
-    i++;
-    current = current->after;
-  }
-}
