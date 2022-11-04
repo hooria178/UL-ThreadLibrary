@@ -2,23 +2,24 @@
 lib := libuthread.a
 objs := preempt.o uthread.o context.o queue.o sem.o
 CC := gcc
-CFLAGS := -Wall -Werror
+CFLAGS := -Wall -Werror -MMD
 CFLAGS += -g
+
+deps := $(patsubst %.o,%.d,$(objs))
+-include $(deps)
 DEPFLAGS = -MMD -MF $(@:.o=.d)
 
 ifneq ($(V),1)
 Q = @
 endif
 
-all: $(lib)
-
-$(lib): $(objs)
-	$(Q)$(CC) $(CFLAGS) -o $@ $^
+libuthread.a: $(objs)
+	@echo "CC $@"
+	ar -rcs libuthread.a $(objs)
 
 %.o: %.c
 	@echo "CC $@"
 	$(Q)$(CC) $(CFLAGS) -c -o $@ $< $(DEPFLAGS)
 
 clean:
-	@echo "clean"
-	$(Q)rm -f $(targets) $(objs) $(lib) *.d
+	$(Q)rm -rf $(lib) $(objs) $(deps)
