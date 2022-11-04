@@ -17,7 +17,7 @@
  */
 #define HZ 100
 
-/* Creates an instance of struct sigaction called preemptSignal to ...*/
+/* Creates an instance of struct sigaction called preemptSignal*/
 struct sigaction preemptSignal;
 
 /* Block signals of type SIGVTALRM */
@@ -55,7 +55,6 @@ unsigned int signalAlarm(void)
 */
 void preempt_start(bool preempt)
 {
-    /* TODO Phase 4 */
 
     if (preempt == true)
     {
@@ -77,11 +76,8 @@ void preempt_start(bool preempt)
 
 void preempt_stop(void)
 {
-    /* TODO Phase 4 */
     /* 
         Restore previous timer configuration, and previous action associated to
         virtual alarm signals.
     */
 }
-
-/* NEED TO FINISH PREEMPT_STOP() FUNCTION */
